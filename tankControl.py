@@ -1,26 +1,20 @@
 import RPi.GPIO as GPIO
-from gpiozero import Servo
-import time
+from gpiozero.pins.pigpio import PiGPIOFactory
+from gpiozero import AngularServo
+from time import sleep
 
+factory = PiGPIOFactory()
+servo = AngularServo(12, min_angle=0,
+ max_angle=180, min_pulse_width=0.0005, 
+ max_pulse_width=0.0024, pin_factory=factory)                   
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(12, GPIO.OUT)
-#GPIO.setup(13, GPIO.OUT)
+servo.angle = 0
 
-p = GPIO.PWM(12,50)
-#q = GPIO.PWM(13,50)
-#q.start(7)
-
-
-p.start(2.5)
-
-p.ChangeDutyCycle(2.5)
-time.sleep(5)
-p.ChangeDutyCycle(11.5)
-time.sleep(5)
-
-#servo = Servo(13)
-
-#for i in range(-150,150):
-#    servo.angle = i
-#    sleep(0.1)
+while True:
+    key = input()
+    if key == "w" and servo.angle != 180:
+        servo.angle = servo.angle + 1
+        sleep(0.000001)
+    if key == "s" and servo.angle != 0:
+        servo.angle = servo.angle - 1
+        sleep(0.000001)
