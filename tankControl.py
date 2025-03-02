@@ -6,11 +6,11 @@ import socket
 import asyncio
 
 def cameraAngleControl():
-    commsPort = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    commsPort = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     commsPort.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    ipAddr = "127.0.0.1"
+    ipAddr = "10.127.19.68"
     server_address = (ipAddr, 2222)
-    commsPort.bind(server_address)
+    commsPort.connect(server_address)
     commsPort.setblocking(False)
 
     # servo setup
@@ -20,11 +20,11 @@ def cameraAngleControl():
     
     while True:
         try:
-            data, address = commsPort.recvfrom(4096)  # Receive data (4096 is the buffer size)
+            data = commsPort.recv(1024)  # Receive data (4096 is the buffer size)
 
             if data:
-                print("dataReceived")
-                if data == "Left" and servoVertical.angle != 180:
+                print(data)
+                if data == b"Left" and servoVertical.angle != 180:
                     servoVertical.angle = servoVertical.angle + 1
                     sleep(0.000001)
                 if data == "Right" and servoVertical.angle != 0:
