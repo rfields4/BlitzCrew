@@ -24,10 +24,10 @@ def cameraAngleControl():
 
             if data:
                 print("dataReceived")
-                if data == "Down" and servoVertical.angle != 180:
+                if data == "Left" and servoVertical.angle != 180:
                     servoVertical.angle = servoVertical.angle + 1
                     sleep(0.000001)
-                if data == "Up" and servoVertical.angle != 0:
+                if data == "Right" and servoVertical.angle != 0:
                     servoVertical.angle = servoVertical.angle - 1
                     sleep(0.000001)
         except BlockingIOError:
