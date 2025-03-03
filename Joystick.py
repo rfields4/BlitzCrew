@@ -39,7 +39,7 @@ while True:
         print("Left Joystick: Left")
     elif Lx.value == 32767:
         print("Left Joystick: Right")
-
+        client_socket.sendall(b"Right")
    
 
     else:
