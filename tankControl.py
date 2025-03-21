@@ -6,12 +6,10 @@ import socket
 import asyncio
 
 def cameraAngleControl():
-    commsPort = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    commsPort.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    ipAddr = "10.127.19.68"
-    server_address = (ipAddr, 2222)
-    commsPort.connect(server_address)
-    commsPort.setblocking(False)
+    commsPort = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    
+    ipAddr = "192.168.69.69"
+    commsPort.bind((ipAddr, 5005))    
 
     # servo setup
     factory = PiGPIOFactory()
