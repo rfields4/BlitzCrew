@@ -16,31 +16,28 @@ Rx = AnalogIn(ads, 1)
 Ry = AnalogIn(ads, 0)
 
 # Create a UDP socket
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# Set socket options
-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # Bind the socket to an address and port
-server_address = ("10.127.19.68", 2222)
-server_socket.bind(server_address)
-
-# Listen for incoming connections (max 1 client in this case)
-print(f"Listening on {server_address}")
-server_socket.listen(1)
-client_socket, client_address = server_socket.accept()
+ipAddr = "192.168.69.69"
+port =  2222
 
 while True:
     # Read from a single-ended input (A0)
 
    # print("Raw ADC Value:", chan.value)
-    if Lx.value < 100:
-        client_socket.sendall(b"Left")
-        print("Left Joystick: Left")
-    elif Lx.value == 32767:
-        print("Left Joystick: Right")
-        client_socket.sendall(b"Right")
-   
+    if Ry.value < 100:
+        server.sendto(b"Up", (ipAddr, port))
+        print("Right Joystick: Up")
+    elif Ry.value == 32767:
+        print("Right Joystick: Down")
+        server.sendto(b"Down", (ipAddr, port))
+    elif Rx.value < 100:
+        server.sendto(b"Right", (ipAddr, port))
+        print("Right Joystick: Right")
+    elif Rx.value == 32767:
+        server.sendto(b"Left", (ipAddr, port))
+        print("Right Joystick: Left")
 
     else:
         #print(Lx.value)
