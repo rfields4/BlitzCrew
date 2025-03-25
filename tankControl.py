@@ -37,23 +37,27 @@ def cameraAngleControl():
 
             if data:
                 print(data)
-                if data == b"Left" and servoVertical.angle != 180:
+                if data == b"RLeft" and servoVertical.angle != 180:
                     servoVertical.angle = servoVertical.angle + 1
                     sleep(0.000001)
-                elif data == "Right" and servoVertical.angle != 0:
+                elif data == "RRight" and servoVertical.angle != 0:
                     servoVertical.angle = servoVertical.angle - 1
                     sleep(0.000001)
                 if data == "LRight":
-                    leftpwmPin.ChangeDutyCycle(100)
+                    rightpwmPin.ChangeDutyCycle(100)
                     sleep(0.01)
                 if data == "LLeft":
                     leftpwmPin.ChangeDutyCycle(100)
                     sleep(.01)
+                if data == "RUp":
+                    leftpwmPin.ChangeDutyCycle(100)
+                    leftpwmPin.ChangeDutyCycle(100)
+                    sleep(.01)
                 
-                if data == b"Left" and servoHorizontal.angle < 297:
+                if data == b"RLeft" and servoHorizontal.angle < 297:
                     servoHorizontal.angle = servoHorizontal.angle + 2
                     sleep(0.000001)
-                if data == b"Right" and servoHorizontal.angle > 3:
+                if data == b"RRight" and servoHorizontal.angle > 3:
                     servoHorizontal.angle = servoHorizontal.angle - 2
                     sleep(0.000001)
         except BlockingIOError:
