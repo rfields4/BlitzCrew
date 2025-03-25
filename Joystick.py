@@ -10,10 +10,10 @@ i2c = busio.I2C(board.SCL, board.SDA)
 
 # Create ADS object
 ads = ADS1115(i2c)
-Lx = AnalogIn(ads, 3)
-Ly = AnalogIn(ads, 2)
-Rx = AnalogIn(ads, 1)
-Ry = AnalogIn(ads, 0)
+Lx = AnalogIn(ads, 0)
+Ly = AnalogIn(ads, 1)
+Rx = AnalogIn(ads, 2)
+Ry = AnalogIn(ads, 3)
 
 # Create a UDP socket
 server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -24,10 +24,10 @@ port =  2222
 
 while True:
     # Read from a single-ended input (A0)
-
+    
    # print("Raw ADC Value:", chan.value)
     if Ry.value < 100:
-        server.sendto(b"Up", (ipAddr, port))
+        server.sendto(b"RUp", (ipAddr, port))
         print("Right Joystick: Up")
     elif Ry.value == 32767:
         print("Right Joystick: Down")
@@ -40,5 +40,20 @@ while True:
         print("Right Joystick: Left")
 
     else:
-        #print(Lx.value)
+       # print(Lx.value)
         print("\n")
+    
+    if Ly.value < 100:
+       server.sendto(b"LDown", (ipAddr, port))
+       print("Left Joystick: Down")
+    elif Ly.value == 32767:
+       server.sendto(b"LUP", (ipAddr, port))
+       print("Left Joystick: Up")
+    elif Lx.value < 100:
+       server.sendto(b"LLeft", (ipAddr, port))
+       print("Left Joystick: Left")
+
+    elif Lx.value == 32767:
+       server.sendto(b"LRight", (ipAddr, port))
+       print("Left Joystick: Right")
+
