@@ -32,7 +32,7 @@ def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 # Function to run the Flask app
 def run_flask_app():
-    app.run(host='0.0.0.0', port=5000, threaded=True)
+    app.run(host='192.168.69.69', port=5000, threaded=True)
 
 # Function to run tankControl.cameraAngleControl asynchronously
 def run_camera_angle_control():
