@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 def generate_frames():
     picam2 = Picamera2()
-    config = picam2.create_video_configuration(main={"size": (640, 400)})
+    config = picam2.create_video_configuration(main={"size": (800, 480)})
     picam2.configure(config)
     picam2.start()
 
