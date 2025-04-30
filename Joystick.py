@@ -22,38 +22,66 @@ server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 ipAddr = "192.168.69.69"
 port =  2222
 
+PrevHoldingRDown = False
+PrevHoldingRUp = False
+PrevHoldingRLeft = False
+PrevHoldingRRight = False
+
+HoldingRDown = False
+HoldingRUp = False
+HoldingRLeft = False
+HoldingRRight = False
+
+
 while True:
-    # Read from a single-ended input (A0)
+    #Reset All Current Conditions of Right Joystick State
     
-   # print("Raw ADC Value:", chan.value)
-    if Ry.value < 100:
-        server.sendto(b"RDown", (ipAddr, port))
-        print("Right Joystick: Down")
-    if Ry.value == 32767:
+    HoldingRDown = False
+    HoldingRUp = False
+    HoldingRLeft = False
+    HoldingRRight = False
+
+    print(Ry.value)
+    if Ry.value < 100: #check for when holding down
+          HoldingRDown = True
+          if HoldingRDown and not PrevHoldingRDown:
+                server.sendto(b"RDown", (ipAddr, port))
+                print("Right Joystick: Down")
+
+    elif Ry.value == 32767:
         print("Right Joystick: Up")
         server.sendto(b"RUp", (ipAddr, port))
+    else:
+          if PrevHoldingRDown:
+                HoldingRDown = False
+                server.sendto(b"RDownNot", (ipAddr,port))
+                print("Right Joystick: NOT Down")
+
     if Rx.value < 100:
         server.sendto(b"RLeft", (ipAddr, port))
-        print("Right Joystick: :Left")
+#        print("Right Joystick: :Left")
     if Rx.value == 32767:
         server.sendto(b"RRight", (ipAddr, port))
-        print("Right Joystick: Right")
-
+#        print("Right Joystick: Right")
+    if Rx.value >= 100  and Rx.value != 32767 and Ry.value >= 100 and Ry.value != 32767:
+        server.sendto(b"RNone", (ipAddr, port))
+#        print("Right Joystick: None")
     else:
-       # print(Lx.value)
         print("\n")
     
     if Ly.value < 100:
        server.sendto(b"LDown", (ipAddr, port))
-       print("Left Joystick: Down")
+#       print("Left Joystick: Down")
     if Ly.value == 32767:
-       server.sendto(b"LUP", (ipAddr, port))
-       print("Left Joystick: Up")
+       server.sendto(b"LUp", (ipAddr, port))
+#       print("Left Joystick: Up")
     if Lx.value < 100:
        server.sendto(b"LLeft", (ipAddr, port))
-       print("Left Joystick: Left")
+#       print("Left Joystick: Left")
 
     if Lx.value == 32767:
        server.sendto(b"LRight", (ipAddr, port))
-       print("Left Joystick: Right")
+#       print("Left Joystick: Right")
 
+    #Change Current States to Previous States
+    PrevHoldingRDown = HoldingRDown
