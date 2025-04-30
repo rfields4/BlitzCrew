@@ -43,20 +43,25 @@ while True:
 
     print(Ry.value)
     if Ry.value < 100: #check for when holding down
-          HoldingRDown = True
-          if HoldingRDown and not PrevHoldingRDown:
+         HoldingRDown = True 
+         if not PrevHoldingRDown:
                 server.sendto(b"RDown", (ipAddr, port))
                 print("Right Joystick: Down")
 
     elif Ry.value == 32767:
-        print("Right Joystick: Up")
-        server.sendto(b"RUp", (ipAddr, port))
+         HoldingRUp = True
+         if not PrevHoldingRUp: 
+               print("Right Joystick: Up")
+               server.sendto(b"RUp", (ipAddr, port))
     else:
           if PrevHoldingRDown:
                 HoldingRDown = False
                 server.sendto(b"RDownNot", (ipAddr,port))
                 print("Right Joystick: NOT Down")
-
+          elif PrevHoldingRUp:
+                HoldingRUp = False
+                server.sendto(b"RUpNot", (ipAddr,port))
+                print("Right Joystick: NOT Up")
     if Rx.value < 100:
         server.sendto(b"RLeft", (ipAddr, port))
 #        print("Right Joystick: :Left")
@@ -85,3 +90,4 @@ while True:
 
     #Change Current States to Previous States
     PrevHoldingRDown = HoldingRDown
+    PrevHoldingRUp = HoldingRUp
