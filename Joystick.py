@@ -80,7 +80,7 @@ while True:
          if not PrevHoldingRLeft:
                print("Right Joystick: Left")
                server.sendto(b"RLeft", (ipAddr, port))
-    elif Rx.value = 32767:
+    elif Rx.value == 32767:
          HoldingRRight = True
          if not PrevHoldingRRight:
                print("Right Joystick: Right")
@@ -119,7 +119,7 @@ while True:
          if not PrevHoldingLLeft:
                print("Left Joystick: Left")
                server.sendto(b"LLeft", (ipAddr, port))
-    elif Lx.value = 32767:
+    elif Lx.value == 32767:
          HoldingLRight = True
          if not PrevHoldingLRight:
                print("Left Joystick: Right")
