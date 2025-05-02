@@ -1,6 +1,6 @@
 import asyncio
 import io
-import tankControl
+from tankControl import TankControl
 from picamera2 import Picamera2
 from flask import Flask, Response
 from concurrent.futures import ThreadPoolExecutor
@@ -35,16 +35,14 @@ def run_flask_app():
     app.run(host='192.168.69.69', port=5000, threaded=True)
 
 # Function to run tankControl.cameraAngleControl asynchronously
-def run_camera_angle_control():
-    tankControl.cameraAngleControl()
+def run_tankControl():
+    tank = TankControl()
 
 # Main function to start tasks in parallel
 def startup():
     flask_process = multiprocessing.Process(target=run_flask_app)
     flask_process.start()
-    run_camera_angle_control()
-    print("BLAH")
-
+    run_tankControl()
     # Run a blocking call (multiprocessing) asynchronously
 
 if __name__ == '__main__':
