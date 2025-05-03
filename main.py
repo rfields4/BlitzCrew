@@ -37,6 +37,7 @@ def run_flask_app():
 # Function to run tankControl.cameraAngleControl asynchronously
 def run_tankControl():
     tank = TankControl()
+    asyncio.run(tank.startTank())
 
 # Main function to start tasks in parallel
 def startup():
