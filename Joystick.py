@@ -2,8 +2,17 @@ import board
 import busio
 from adafruit_ads1x15.ads1115 import ADS1115
 from adafruit_ads1x15.analog_in import AnalogIn
-
+import pigpio
 import socket
+import os
+
+import os
+import time
+
+
+# Bind the socket to an address and port
+ipAddr = "192.168.69.69"
+port =  2222
 
 # Initialize I2C
 i2c = busio.I2C(board.SCL, board.SDA)
@@ -15,12 +24,61 @@ Ly = AnalogIn(ads, 1)
 Ry = AnalogIn(ads, 2)
 Rx = AnalogIn(ads, 3)
 
+#Create Button object
+pi = pigpio.pi()
+laserButton = 21              #Pin 40, 'A' Button
+refreshButton = 20            #Pin 39, 'Y' Button
+resetCameraButton = 16        #Pin 36, 'B' Button
+changeFiringModeButton = 26   #Pin 37, 'X' Button 
+
+pi.set_mode(laserButton, pigpio.INPUT)
+pi.set_pull_up_down(laserButton, pigpio.PUD_DOWN)
+
+pi.set_mode(refreshButton, pigpio.INPUT)
+pi.set_pull_up_down(refreshButton, pigpio.PUD_DOWN)
+     
+pi.set_mode(resetCameraButton, pigpio.INPUT)
+pi.set_pull_up_down(resetCameraButton, pigpio.PUD_DOWN)
+
+pi.set_mode(changeFiringModeButton, pigpio.INPUT)
+pi.set_pull_up_down(changeFiringModeButton, pigpio.PUD_DOWN)
+
 # Create a UDP socket
 server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-# Bind the socket to an address and port
-ipAddr = "192.168.69.69"
-port =  2222
+# Set Up Button Interrupts
+def laserButtonPress(gpio,level, tick):
+     print("Laser Shoot")
+     server.sendto(b"APress", (ipAddr, port))
+
+def laserButtonUnpress(gpio, level, tick):
+     print("Laser Not Shoot")
+     server.sendto(b"AUnpress", (ipAddr, port))
+
+def refreshButtonPress(gpio, level, tick):
+    # Simulate F5 key to refresh Chromium
+    os.system('xdotool search --onlyvisible --class "Chromium" key F5')
+    print("Refreshed")
+
+def resetCameraButtonPress(gpio, level, tick):
+    print("Reseting Camera")
+    server.sendto(b"BPress", (ipAddr, port))
+
+def changeFiringModeButtonPress(gpio, level, tick):
+    print("YPress")
+    server.sendto(b"BPress", (ipAddr, port))
+
+pi.callback(laserButton, pigpio.RISING_EDGE, laserButtonPress)
+pi.callback(laserButton, pigpio.FALLING_EDGE,laserButtonUnpress)
+
+pi.callback(refreshButton, pigpio.RISING_EDGE, refreshButtonPress)
+pi.callback(resetCameraButton, pigpio.RISING_EDGE, resetCameraButtonPress)
+pi.callback(changeFiringModeButton, pigpio.RISING_EDGE, changeFiringModeButtonPress)
+
+pi.set_glitch_filter(laserButton, 1000)
+pi.set_glitch_filter(refreshButton, 1000)
+pi.set_glitch_filter(resetCameraButton, 1000)
+pi.set_glitch_filter(changeFiringModeButton, 1000)
 
 PrevHoldingRDown = False
 PrevHoldingRUp = False
