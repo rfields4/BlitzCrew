@@ -10,13 +10,13 @@ class TankControl():
       def __init__(self):
           pi = pigpio.pi()
           self.leftTreadForwardPin  = 27 #PIN 13 ForwardPin
-          self.leftTreadBackPin  = 22 #PIN 15 BackPin
+          self.leftTreadBackPin  = 22    #PIN 15 BackPin
  
           self.rightTreadForwardPin = 23 #PIN 16 ForwardPin
-          self.rightTreadBackPin = 24 #Pin 18 BackPin
+          self.rightTreadBackPin = 24    #Pin 18 BackPin
 
-          self.leftPWM = 6 #PIN 29
-          self.rightPWM= 5 #PIN 31
+          self.leftPWM = 6               #PIN 29
+          self.rightPWM= 5               #PIN 31
 
           #Setup Pins
           pi.set_mode(self.leftTreadForwardPin, pigpio.OUTPUT)
@@ -51,36 +51,50 @@ class TankControl():
           self.servoVertical.angle = 90
           self.servoHorizontal.angle = 150
           self.pi = pi
+
+          self.RRight = False
+          self.RLeft = False
+          self.RUp =   asyncio.Event()
+          self.RDown = asyncio.Event()
+
+
       async def startTank(self):
             await asyncio.gather(
                  self.handleComms(),
-                 self.changeVertCamera())
-                 
+                 self.changeVertCamera(),
+                 self.moveServoUp(),
+                 self.moveServoDown())
 
-      def handleComms(self):
+      async def handleComms(self):
             print("CommsStarted")
+            loop = asyncio.get_event_loop()
             servoVertical = self.servoVertical
             servoHorizontal = self.servoHorizontal
             LRight = False
             LLeft  = False
             LUp    = False
             LDown  = False
+
+
             while True:
                   try:
-                     data, address = self.commsPort.recvfrom(1024)  # Receive data (4096 is the buffer size)
+                     (data, address) = await loop.run_in_executor(None, self.commsPort.recvfrom, 1024)  # Receive data (4096 is the buffer size)
                      print(data)
-                     if data == b"RUp" and servoVertical.angle + 5 < 180:
-                        servoVertical.angle = servoVertical.angle + 5
-                        sleep(0.000001)
-                        print(servoVertical.angle)
-                     elif data == b"RDown" and servoVertical.angle - 5  > 0:
-                        servoVertical.angle = servoVertical.angle - 5
-                        sleep(0.000001)
-                        print(servoVertical.angle)
-                     if data == b"LRight":
+                     if data == b"RUp":
+                        self.RUp.set()
+                        self.RDown.clear()
+                     elif data == b"RUpNot":
+                        self.RUp.clear()
+
+                     elif data == b"RDown":
+                        self.RDown.set()
+                        self.RUp.clear()
+                     elif data == b"RDownNot":
+                        self.RDown.clear()
+                     elif data == b"LRight":
                         LRight = True
                         self.moveRight()
-                     if data == b"LRightNot":
+                     elif data == b"LRightNot":
                         LRight = False 
                   
                      if data == b"LLeftNot":
@@ -122,7 +136,7 @@ class TankControl():
                   except BlockingIOError:
                      pass
 
-      def moveRight(self):
+      async def moveRight(self):
                self.pi.write(27, 0)
                self.pi.write(22, 1)
                self.pi.write(23, 1)
@@ -131,7 +145,7 @@ class TankControl():
                self.pi.set_PWM_dutycycle(self.rightPWM,255)
                self.pi.set_PWM_dutycycle(self.leftPWM,255)
       
-      def moveUp(self):               
+      async def moveUp(self):               
                         self.pi.write(27, 0)
                         self.pi.write(22, 1)
                         self.pi.write(23, 0)
@@ -140,7 +154,7 @@ class TankControl():
                         self.pi.set_PWM_dutycycle(self.rightPWM,255)
                         self.pi.set_PWM_dutycycle(self.leftPWM,255)
 
-      def moveDown(self):
+      async def moveDown(self):
                  self.pi.write(27, 1)
                  self.pi.write(22, 0)
                  self.pi.write(23, 1)
@@ -149,7 +163,7 @@ class TankControl():
                  self.pi.set_PWM_dutycycle(self.rightPWM,255)
                  self.pi.set_PWM_dutycycle(self.leftPWM, 255)
                         
-      def moveLeft(self):
+      async def moveLeft(self):
                         self.pi.write(27, 1)
                         self.pi.write(22, 0)
                         self.pi.write(23, 0)
@@ -158,7 +172,28 @@ class TankControl():
                         self.pi.set_PWM_dutycycle(self.rightPWM,255)
                         self.pi.set_PWM_dutycycle(self.leftPWM,255)
                      
-      def changeVertCamera(self):
+      async def moveServoUp(self):
+          while True: #keep Thread Alive
+            await self.RUp.wait()
+            while self.RUp.is_set() and self.servoVertical.angle + 1 < 180:   
+                self.servoVertical.angle = self.servoVertical.angle +1
+                await asyncio.sleep(.001)
+            await asyncio.sleep(.001)
+ 
+      async def moveServoDown(self):
+         while True: #keep Thread Alive
+           await self.RDown.wait()
+           while self.RDown.is_set() and self.servoVertical.angle - 1 > 0:
+               self.servoVertical.angle = self.servoVertical.angle -1
+               await asyncio.sleep(.0001)
+           await asyncio.sleep(.0001)
+      async def moveServoLeft(self):
+                 self.servoHorizontal.angle = self.servoHorizontal.angle +1
+
+      async def moveServoRight(self):
+                 servoHorizontal.angle = servoHorizontal.angle -1
+
+      async def changeVertCamera(self):
            pass      
     
    
