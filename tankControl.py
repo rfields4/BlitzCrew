@@ -18,6 +18,8 @@ class TankControl():
           self.leftPWM = 6               #PIN 29
           self.rightPWM= 5               #PIN 31
 
+          self.laser = 25                #PIN 22
+
           #Setup Pins
           pi.set_mode(self.leftTreadForwardPin, pigpio.OUTPUT)
           pi.set_mode(self.leftTreadBackPin, pigpio.OUTPUT)
@@ -52,8 +54,8 @@ class TankControl():
           self.servoHorizontal.angle = 150
           self.pi = pi
 
-          self.RRight = False
-          self.RLeft = False
+          self.RRight = asyncio.Event()
+          self.RLeft = asyncio.Event()
           self.RUp =   asyncio.Event()
           self.RDown = asyncio.Event()
 
@@ -63,7 +65,9 @@ class TankControl():
                  self.handleComms(),
                  self.changeVertCamera(),
                  self.moveServoUp(),
-                 self.moveServoDown())
+                 self.moveServoDown(),
+                 self.moveServoLeft(),
+                 self.moveServoRight())
 
       async def handleComms(self):
             print("CommsStarted")
@@ -74,7 +78,8 @@ class TankControl():
             LLeft  = False
             LUp    = False
             LDown  = False
-
+            laserLatching = False
+            laserOn = False
 
             while True:
                   try:
@@ -85,25 +90,32 @@ class TankControl():
                         self.RDown.clear()
                      elif data == b"RUpNot":
                         self.RUp.clear()
-
                      elif data == b"RDown":
                         self.RDown.set()
                         self.RUp.clear()
                      elif data == b"RDownNot":
                         self.RDown.clear()
-                     elif data == b"LRight":
-                        LRight = True
+                     if data == b"RLeft":
+                        self.RLeft.set()
+                        self.RRight.clear()
+                     elif data == b"RLeftNot":
+                        self.RLeft.clear()
+                     elif data == b"RRight":
+                        self.RRight.set()
+                        self.RLeft.clear()
+                     elif data == b"RRightNot":
+                        self.RRight.clear()
+                     if data == b"LRight":
                         self.moveRight()
-                     elif data == b"LRightNot":
-                        LRight = False 
-                  
+                        LRight = True
+                     if data == b"LRightNot":
+                        LRight = False
                      if data == b"LLeftNot":
                         LLeft = False
                     
                      if data == b"LLeft":
                         self.moveLeft()
-                        LLeft = True   
-             
+                        LLeft = True
                      if data == b"LUp":
                         LUp = True
                         self.moveUp()
@@ -118,6 +130,17 @@ class TankControl():
                      if data == b'LDown':
                         LDown = True
                         self.moveDown()
+                     if data == b'APress':
+                        self.pi.write(25, 1)
+                     if data == b'AUnpress' and laserLatching == False:
+                        self.pi.write(25, 0)
+                     if data == b'BPress':
+                        self.servoVertical.angle = 90
+                        self.servoHorizontal.angle = 150
+                     if data == b'XPress' and laserLatching == False:
+                        laserLatching = True
+                     if data == b'XPress' and laserLatching == True:
+                        laserLatching = False
                      if (not LLeft and not LRight) :
                         if LUp: #If still Holding Up, go back to moving up 
                              self.moveUp()
@@ -127,16 +150,10 @@ class TankControl():
                              self.pi.set_PWM_dutycycle(self.rightPWM,0)
                              self.pi.set_PWM_dutycycle(self.leftPWM, 0)
                             
-                     if data == b"RLeft" and servoHorizontal.angle + 7 < 300:
-                        servoHorizontal.angle = servoHorizontal.angle + 7
-                        sleep(0.000001)
-                     if data == b"RRight" and servoHorizontal.angle - 7 > 0:
-                        servoHorizontal.angle = servoHorizontal.angle - 7
-                        sleep(0.000001)
                   except BlockingIOError:
                      pass
 
-      async def moveRight(self):
+      def moveRight(self):
                self.pi.write(27, 0)
                self.pi.write(22, 1)
                self.pi.write(23, 1)
@@ -145,7 +162,7 @@ class TankControl():
                self.pi.set_PWM_dutycycle(self.rightPWM,255)
                self.pi.set_PWM_dutycycle(self.leftPWM,255)
       
-      async def moveUp(self):               
+      def moveUp(self):               
                         self.pi.write(27, 0)
                         self.pi.write(22, 1)
                         self.pi.write(23, 0)
@@ -154,7 +171,7 @@ class TankControl():
                         self.pi.set_PWM_dutycycle(self.rightPWM,255)
                         self.pi.set_PWM_dutycycle(self.leftPWM,255)
 
-      async def moveDown(self):
+      def moveDown(self):
                  self.pi.write(27, 1)
                  self.pi.write(22, 0)
                  self.pi.write(23, 1)
@@ -163,7 +180,7 @@ class TankControl():
                  self.pi.set_PWM_dutycycle(self.rightPWM,255)
                  self.pi.set_PWM_dutycycle(self.leftPWM, 255)
                         
-      async def moveLeft(self):
+      def moveLeft(self):
                         self.pi.write(27, 1)
                         self.pi.write(22, 0)
                         self.pi.write(23, 0)
@@ -187,11 +204,22 @@ class TankControl():
                self.servoVertical.angle = self.servoVertical.angle -1
                await asyncio.sleep(.0001)
            await asyncio.sleep(.0001)
+
       async def moveServoLeft(self):
-                 self.servoHorizontal.angle = self.servoHorizontal.angle +1
+         while True: #keep Thread Alive
+           await self.RLeft.wait()
+           while self.RLeft.is_set() and self.servoHorizontal.angle + 1 < 300:
+               self.servoHorizontal.angle = self.servoHorizontal.angle +1
+               await asyncio.sleep(0.0001)
+           await asyncio.sleep(0.0001)
 
       async def moveServoRight(self):
-                 servoHorizontal.angle = servoHorizontal.angle -1
+         while True: #keep Thread Alive
+           await self.RRight.wait()
+           while self.RRight.is_set() and self.servoHorizontal.angle - 1 > 0:
+               self.servoHorizontal.angle = self.servoHorizontal.angle -1
+               await asyncio.sleep(0.0001)
+           await asyncio.sleep(0.0001)
 
       async def changeVertCamera(self):
            pass      
